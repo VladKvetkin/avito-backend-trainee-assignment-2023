@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Сервис динамического сегментирования пользователей
+  description: |-
+    Сервис, хранящий пользователя и сегменты, в которых он состоит.
+  contact:
+    email: vlad.kvetkin@yandex.ru
+  version: 1.0.11
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: segments
+    description: Сегменты
+  - name: user
+    description: Пользователи
+paths:
+  /api/segment/add:
+    post:
+      tags:
+        - segments
+      summary: Добавление сегмента
+      operationId: addSegment
+      requestBody:
+        description: Добавить сегмент с именем name
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Segment"
+        required: true
+      responses:
+        "200":
+          description: Успешное добавление сегмента
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SegmentResultResponse"
+        "400":
+          description: Пустое имя сегмента или не удалось распарсить JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка при добавлении сегмента
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/segment/delete:
+    post:
+      tags:
+        - segments
+      summary: Удаление сегмента
+      operationId: deleteSegment
+      requestBody:
+        description: Удалить сегмент с именем name
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Segment"
+        required: true
+      responses:
+        "200":
+          description: Успешное удаление сегмента
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SegmentResultResponse"
+        "400":
+          description: Пустое имя сегмента или не удалось распарсить JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка при удалении сегмента
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/user/segments:
+    post:
+      tags:
+        - user
+      summary: Получение сегментов пользователя
+      operationId: getSegments
+      requestBody:
+        description: Получить сегменты пользователя user_id
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetSegments"
+        required: true
+      responses:
+        "200":
+          description: Успешное получение сегментов пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSegmentsResponse"
+        "400":
+          description: Пустой user_id или не удалось распарсить JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка при получении сегментов пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/user/segments-history:
+    post:
+      tags:
+        - user
+      summary: Получение ссылки на csv-файл с отчетом об истории сегментов пользователей за период
+      operationId: getSegmentsHistory
+      requestBody:
+        description: Получить ссылку на csv-файл с отчетом об истории сегментов пользователей за period
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetSegmentsHistory"
+        required: true
+      responses:
+        "200":
+          description: Успешное получение ссылки на csv-файл с отчетом об истории сегментов пользователей за period
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSegmentsHistoryResponse"
+        "400":
+          description: Невалидный или пустой period или не удалось распарсить JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка при получении истории сегментов или формировании отчета
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/user/change-segments:
+    post:
+      tags:
+        - user
+      summary: Изменение сегментов пользователя
+      operationId: changeUserSegments
+      requestBody:
+        description: Добавить сегменты в add_segments с ttl (опционально), удалить сегменты в delete_segments для пользователя с идентификатором user_id
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeSegments"
+        required: true
+      responses:
+        "200":
+          description: Успешное изменение сегментов пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SegmentResultResponse"
+        "400":
+          description: Не передали сегменты для добавления и удаления или не удалось распарсить JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка при изменении сегментов пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Segment:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: AVITO_VOICE_MESSAGES
+    GetSegments:
+      required:
+        - user_id
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 2002
+    ChangeSegments:
+      required:
+        - user_id
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 2002
+        delete_segments:
+          type: array
+          items:
+            type: string
+            example: "AVITO_VOICE_MESSAGES"
+        add_segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddSegment"
+    GetSegmentsHistory:
+      required:
+        - period
+      type: object
+      properties:
+        period:
+          type: string
+          example: "2023-09"
+          description: "Период в формате год-месяц, как в примере"
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    SegmentResultResponse:
+      type: object
+      properties:
+        result:
+          type: boolean
+    GetSegmentsResponse:
+      type: object
+      properties:
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Segment"
+    GetSegmentsHistoryResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          example: "localhost:8080/api/segment/report/2023-09-segments-history-report.csv"
+    AddSegment:
+      type: object
+      properties:
+        name:
+          type: string
+          example: AVITO_DISCOUNT_30
+        ttl:
+          type: string
+          example: "2023-08-26 15:04:05"
+          description: "Время в формате год-месяц-день часы:минуты:секунды, как в примере"
+  requestBodies:
+    Segment:
+      description: Объект сегмента
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Segment"
+    GetSegments:
+      description: Запрос на получение сегментов пользователя
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GetSegments"
